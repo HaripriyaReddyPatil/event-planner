@@ -4,6 +4,10 @@ Event Planner is a Flask web application for creating events, managing RSVPs, an
 
 I built it to practice full-stack development with Flask, SQLite, HTML, CSS, and Jinja templates.
 
+## Live Demo
+
+[View the live application](https://event-planner-cpoq.onrender.com)
+
 ## Features
 
 ### For attendees
