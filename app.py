@@ -884,6 +884,8 @@ def not_found(_error):
     ), 404
 
 
+# Make sure the database tables exist when the app starts.
+init_db()
+
 if __name__ == "__main__":
-    init_db()
     app.run(debug=True)
