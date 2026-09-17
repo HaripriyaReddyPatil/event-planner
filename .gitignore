@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+*.pyc
+event_planner.db
+.DS_Store
+.env

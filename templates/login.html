@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Log In{% endblock %}
+{% block content %}
+<section class="auth-section">
+    <div class="auth-card">
+        <div class="eyebrow dark">Welcome back</div>
+        <h1>Log in</h1>
+        <p>Access your events, RSVPs, favorites, and analytics.</p>
+
+        <form method="POST" class="form-stack">
+            <label>Email</label>
+            <input type="email" name="email" required placeholder="you@example.com">
+
+            <label>Password</label>
+            <input type="password" name="password" required placeholder="Your password">
+
+            <button class="button primary full" type="submit">Log in</button>
+        </form>
+
+        <p class="auth-footer">
+            Need an account?
+            <a href="{{ url_for('register') }}">Sign up</a>
+        </p>
+    </div>
+</section>
+{% endblock %}

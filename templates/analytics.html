@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Event Analytics{% endblock %}
+
+{% block content %}
+<section class="page-container section">
+    <div class="dashboard-header">
+        <div>
+            <div class="eyebrow dark">Organizer analytics</div>
+            <h1>{{ event["title"] }}</h1>
+            <p>Track demand, attendance, and guest status.</p>
+        </div>
+
+        <div class="header-actions">
+            <a class="button secondary" href="{{ url_for('event_detail', event_id=event['id']) }}">View event</a>
+            <a class="button primary" href="{{ url_for('export_attendees', event_id=event['id']) }}">Export CSV</a>
+        </div>
+    </div>
+
+    <div class="stat-grid">
+        <div class="stat-card">
+            <span>Confirmed</span>
+            <strong>{{ event["going_count"] }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Waitlisted</span>
+            <strong>{{ event["waitlist_count"] }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Checked in</span>
+            <strong>{{ event["checked_in_count"] }}</strong>
+        </div>
+        <div class="stat-card">
+            <span>Fill rate</span>
+            <strong>{{ fill_rate }}%</strong>
+        </div>
+    </div>
+
+    <div class="analytics-grid">
+        <div class="analytics-card">
+            <h2>Capacity</h2>
+            <div class="progress-label">
+                <span>{{ event["going_count"] }} of {{ event["max_guests"] }} spots filled</span>
+                <strong>{{ fill_rate }}%</strong>
+            </div>
+            <div class="progress-track">
+                <div class="progress-bar" style="width: {{ [fill_rate, 100]|min }}%"></div>
+            </div>
+        </div>
+
+        <div class="analytics-card">
+            <h2>Check-in rate</h2>
+            <div class="progress-label">
+                <span>{{ event["checked_in_count"] }} of {{ event["going_count"] }} confirmed guests</span>
+                <strong>{{ checkin_rate }}%</strong>
+            </div>
+            <div class="progress-track">
+                <div class="progress-bar alt" style="width: {{ [checkin_rate, 100]|min }}%"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="dashboard-block">
+        <div class="section-header">
+            <div>
+                <h2>Attendee management</h2>
+                <p>Check guests in as they arrive.</p>
+            </div>
+        </div>
+
+        {% if attendees %}
+            <div class="table-card">
+                <div class="table-head analytics-table">
+                    <span>Attendee</span>
+                    <span>Status</span>
+                    <span>Check-in</span>
+                    <span></span>
+                </div>
+
+                {% for attendee in attendees %}
+                    <div class="table-row analytics-table">
+                        <div>
+                            <strong>{{ attendee["name"] }}</strong>
+                            <small>{{ attendee["email"] }}</small>
+                        </div>
+
+                        <span class="status-pill {{ attendee['status'] }}">{{ attendee["status"] }}</span>
+
+                        <span>{{ "Yes" if attendee["checked_in"] else "No" }}</span>
+
+                        <div>
+                            {% if attendee["status"] == "going" %}
+                                <form method="POST" action="{{ url_for('toggle_checkin', event_id=event['id'], user_id=attendee['id']) }}">
+                                    <button class="button secondary small-button" type="submit">
+                                        {{ "Undo check-in" if attendee["checked_in"] else "Check in" }}
+                                    </button>
+                                </form>
+                            {% else %}
+                                <span class="muted">Waiting</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state small">
+                <p>No RSVPs yet.</p>
+            </div>
+        {% endif %}
+    </div>
+</section>
+{% endblock %}

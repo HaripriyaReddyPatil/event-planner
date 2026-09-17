@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}{{ "Edit Event" if event else "Create Event" }}{% endblock %}
+
+{% block content %}
+<section class="page-container section">
+    <div class="form-layout">
+        <div class="form-intro">
+            <div class="eyebrow dark">{{ "Update" if event else "Create" }}</div>
+            <h1>{{ "Edit event" if event else "Create a new event" }}</h1>
+            <p>
+                Add the details attendees need to decide whether the event is right for them.
+            </p>
+
+            <div class="tip-card">
+                <strong>What makes a good event page?</strong>
+                <p>
+                    A clear title, helpful description, realistic guest limit,
+                    and exact location.
+                </p>
+            </div>
+        </div>
+
+        <div class="form-card">
+            <form method="POST" class="form-stack">
+                <label>Event title</label>
+                <input
+                    type="text"
+                    name="title"
+                    required
+                    value="{{ event['title'] if event else '' }}"
+                    placeholder="e.g. Rutgers Tech Meetup"
+                >
+
+                <label>Category</label>
+                <select name="category" required>
+                    {% for category in categories %}
+                        <option
+                            value="{{ category }}"
+                            {% if event and event['category'] == category %}selected{% endif %}
+                        >
+                            {{ category }}
+                        </option>
+                    {% endfor %}
+                </select>
+
+                <div class="form-grid-2">
+                    <div>
+                        <label>Date</label>
+                        <input
+                            type="date"
+                            name="event_date"
+                            required
+                            value="{{ event['event_date'] if event else '' }}"
+                        >
+                    </div>
+
+                    <div>
+                        <label>Time</label>
+                        <input
+                            type="time"
+                            name="event_time"
+                            required
+                            value="{{ event['event_time'] if event else '' }}"
+                        >
+                    </div>
+                </div>
+
+                <label>Location</label>
+                <input
+                    type="text"
+                    name="location"
+                    required
+                    value="{{ event['location'] if event else '' }}"
+                    placeholder="e.g. Busch Student Center"
+                >
+
+                <label>Maximum guests</label>
+                <input
+                    type="number"
+                    name="max_guests"
+                    min="1"
+                    required
+                    value="{{ event['max_guests'] if event else 30 }}"
+                >
+
+                <label>Description</label>
+                <textarea
+                    name="description"
+                    rows="7"
+                    placeholder="What should attendees know?"
+                >{{ event['description'] if event else '' }}</textarea>
+
+                <button class="button primary full" type="submit">
+                    {{ "Save changes" if event else "Create event" }}
+                </button>
+            </form>
+        </div>
+    </div>
+</section>
+{% endblock %}

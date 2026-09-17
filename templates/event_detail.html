@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}{{ event["title"] }}{% endblock %}
+
+{% block content %}
+<section class="page-container section">
+    <div class="detail-layout">
+        <div class="detail-main">
+            <div class="detail-topline">
+                <span class="badge">{{ event["category"] }}</span>
+
+                {% if event_is_past %}
+                    <span class="status-pill neutral">Past event</span>
+                {% elif event["going_count"] >= event["max_guests"] %}
+                    <span class="status-pill waitlist">Waitlist open</span>
+                {% else %}
+                    <span class="status-pill going">RSVP open</span>
+                {% endif %}
+            </div>
+
+            <h1>{{ event["title"] }}</h1>
+            <p class="organizer-line">Organized by {{ event["organizer_name"] }}</p>
+
+            <div class="info-grid">
+                <div class="info-card">
+                    <span>Date</span>
+                    <strong>{{ event["event_date"] }}</strong>
+                </div>
+                <div class="info-card">
+                    <span>Time</span>
+                    <strong>{{ event["event_time"] }}</strong>
+                </div>
+                <div class="info-card">
+                    <span>Location</span>
+                    <strong>{{ event["location"] }}</strong>
+                </div>
+                <div class="info-card">
+                    <span>Attendance</span>
+                    <strong>{{ event["going_count"] }}/{{ event["max_guests"] }}</strong>
+                </div>
+            </div>
+
+            <div class="description-card">
+                <h2>About this event</h2>
+                <p>{{ event["description"] or "No description added." }}</p>
+            </div>
+
+            <div class="utility-actions">
+                <a class="button secondary" href="{{ url_for('calendar_download', event_id=event['id']) }}">
+                    Add to calendar
+                </a>
+
+                {% if logged_in_user %}
+                    <form method="POST" action="{{ url_for('toggle_favorite', event_id=event['id']) }}">
+                        <button class="button secondary" type="submit">
+                            {{ "Remove saved" if favorite else "Save event" }}
+                        </button>
+                    </form>
+                {% endif %}
+            </div>
+
+            {% if logged_in_user and event["owner_id"] == logged_in_user["id"] %}
+                <div class="owner-panel">
+                    <div>
+                        <strong>Organizer tools</strong>
+                        <p>Manage this event, attendance, and reporting.</p>
+                    </div>
+
+                    <div class="owner-actions">
+                        <a class="button primary" href="{{ url_for('analytics', event_id=event['id']) }}">Analytics</a>
+                        <a class="button secondary" href="{{ url_for('edit_event', event_id=event['id']) }}">Edit</a>
+
+                        <form method="POST" action="{{ url_for('clone_event', event_id=event['id']) }}">
+                            <button class="button secondary" type="submit">Duplicate</button>
+                        </form>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('delete_event', event_id=event['id']) }}"
+                            onsubmit="return confirm('Delete this event?');"
+                        >
+                            <button class="button danger" type="submit">Delete</button>
+                        </form>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+
+        <aside class="detail-sidebar">
+            <div class="rsvp-card">
+                <h2>Your RSVP</h2>
+
+                {% if not logged_in_user %}
+                    <p>Log in to reserve your spot.</p>
+                    <a class="button primary full" href="{{ url_for('login') }}">Log in to RSVP</a>
+
+                {% elif event["owner_id"] == logged_in_user["id"] %}
+                    <p>You are organizing this event.</p>
+                    <a class="button secondary full" href="{{ url_for('analytics', event_id=event['id']) }}">Open analytics</a>
+
+                {% elif event_is_past %}
+                    <p>This event has already ended.</p>
+
+                {% elif user_rsvp %}
+                    {% if user_rsvp["status"] == "going" %}
+                        <div class="confirmed-box">✓ You’re going</div>
+                    {% else %}
+                        <div class="waitlist-box">You’re on the waitlist</div>
+                    {% endif %}
+
+                    <form method="POST" action="{{ url_for('cancel_rsvp', event_id=event['id']) }}">
+                        <button class="button secondary full" type="submit">Cancel RSVP</button>
+                    </form>
+
+                {% else %}
+                    {% if event["going_count"] < event["max_guests"] %}
+                        <p>{{ event["max_guests"] - event["going_count"] }} spot{{ '' if event["max_guests"] - event["going_count"] == 1 else 's' }} remaining.</p>
+                        <form method="POST" action="{{ url_for('rsvp', event_id=event['id']) }}">
+                            <button class="button primary full" type="submit">Confirm RSVP</button>
+                        </form>
+                    {% else %}
+                        <p>This event is full. You can still join the waitlist.</p>
+                        <form method="POST" action="{{ url_for('rsvp', event_id=event['id']) }}">
+                            <button class="button primary full" type="submit">Join waitlist</button>
+                        </form>
+                    {% endif %}
+                {% endif %}
+            </div>
+
+            <div class="guest-card">
+                <div class="guest-card-header">
+                    <h2>Attendance</h2>
+                    <span>{{ event["going_count"] }}</span>
+                </div>
+
+                {% set going_attendees = attendees|selectattr("status", "equalto", "going")|list %}
+                {% if going_attendees %}
+                    {% for attendee in going_attendees[:8] %}
+                        <div class="guest-row">
+                            <div class="avatar">{{ attendee["name"][0]|upper }}</div>
+                            <div>
+                                <strong>{{ attendee["name"] }}</strong>
+                                <small>{{ "Checked in" if attendee["checked_in"] else "Going" }}</small>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="muted">No confirmed attendees yet.</p>
+                {% endif %}
+
+                {% if event["waitlist_count"] %}
+                    <div class="waitlist-summary">
+                        {{ event["waitlist_count"] }} on waitlist
+                    </div>
+                {% endif %}
+            </div>
+        </aside>
+    </div>
+</section>
+{% endblock %}

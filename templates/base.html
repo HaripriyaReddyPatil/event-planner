@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Event Planner{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<nav class="navbar">
+    <div class="nav-inner">
+        <a class="brand" href="{{ url_for('home') }}">
+            <span class="brand-mark">EP</span>
+            <span>Event Planner</span>
+        </a>
+
+        <div class="nav-links">
+            <a href="{{ url_for('home') }}">Explore</a>
+
+            {% if logged_in_user %}
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a class="nav-button" href="{{ url_for('create_event') }}">Create Event</a>
+                <a href="{{ url_for('logout') }}">Log out</a>
+            {% else %}
+                <a href="{{ url_for('login') }}">Log in</a>
+                <a class="nav-button" href="{{ url_for('register') }}">Sign up</a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+
+<div class="page-container flash-wrap">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+</div>
+
+{% block content %}{% endblock %}
+
+<footer>
+    <div class="page-container footer-inner">
+        <span>Event Planner</span>
+        <span>Flask · SQLite · Responsive Web App</span>
+        <span>© {{ current_year }}</span>
+    </div>
+</footer>
+</body>
+</html>
