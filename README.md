@@ -122,3 +122,17 @@ A `SECRET_KEY` environment variable should be added in the hosting settings.
 - Reminder emails
 - Pagination
 - Tests
+
+## Screenshots
+
+### Explore Events
+![Explore Events](explore-events.png)
+
+### Organizer Dashboard
+![Organizer Dashboard](organizer-dashboard.png)
+
+### Event Analytics
+![Event Analytics](event-analytics.png)
+
+### Attendee RSVP Experience
+![Attendee RSVP Experience](attendee-rsvp.png)
