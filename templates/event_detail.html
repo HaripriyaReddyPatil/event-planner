@@ -1,159 +1,413 @@
 {% extends "base.html" %}
-{% block title %}{{ event["title"] }}{% endblock %}
+
+{% block title %}{{ event["title"] }} | Event Planner{% endblock %}
 
 {% block content %}
-<section class="page-container section">
-    <div class="detail-layout">
-        <div class="detail-main">
-            <div class="detail-topline">
-                <span class="badge">{{ event["category"] }}</span>
 
-                {% if event_is_past %}
-                    <span class="status-pill neutral">Past event</span>
-                {% elif event["going_count"] >= event["max_guests"] %}
-                    <span class="status-pill waitlist">Waitlist open</span>
-                {% else %}
-                    <span class="status-pill going">RSVP open</span>
-                {% endif %}
-            </div>
+<section class="event-detail-page">
 
-            <h1>{{ event["title"] }}</h1>
-            <p class="organizer-line">Organized by {{ event["organizer_name"] }}</p>
+    <div class="event-detail-main">
 
-            <div class="info-grid">
-                <div class="info-card">
-                    <span>Date</span>
-                    <strong>{{ event["event_date"] }}</strong>
+        <div class="event-hero-card">
+
+            {% if event["image_url"] %}
+                <div class="event-detail-cover">
+                    <img
+                        src="{{ event['image_url'] }}"
+                        alt="{{ event['title'] }}"
+                    >
                 </div>
-                <div class="info-card">
-                    <span>Time</span>
-                    <strong>{{ event["event_time"] }}</strong>
+            {% else %}
+                <div class="event-detail-cover event-detail-placeholder">
+                    <div class="event-cover-symbol">EP</div>
                 </div>
-                <div class="info-card">
-                    <span>Location</span>
-                    <strong>{{ event["location"] }}</strong>
+            {% endif %}
+
+            <div class="event-detail-content">
+
+                <div class="event-detail-topline">
+
+                    <span class="category-chip">
+                        {{ event["category"] }}
+                    </span>
+
+                    {% if event["status"] == "cancelled" %}
+                        <span class="event-state event-state-cancelled">
+                            Cancelled
+                        </span>
+
+                    {% elif event_is_past %}
+                        <span class="event-state event-state-past">
+                            Event ended
+                        </span>
+
+                    {% elif event["going_count"] >= event["max_guests"] %}
+                        <span class="event-state event-state-full">
+                            Waitlist open
+                        </span>
+
+                    {% else %}
+                        <span class="event-state event-state-open">
+                            RSVP open
+                        </span>
+                    {% endif %}
+
                 </div>
-                <div class="info-card">
-                    <span>Attendance</span>
-                    <strong>{{ event["going_count"] }}/{{ event["max_guests"] }}</strong>
-                </div>
-            </div>
 
-            <div class="description-card">
-                <h2>About this event</h2>
-                <p>{{ event["description"] or "No description added." }}</p>
-            </div>
+                <h1>{{ event["title"] }}</h1>
 
-            <div class="utility-actions">
-                <a class="button secondary" href="{{ url_for('calendar_download', event_id=event['id']) }}">
-                    Add to calendar
-                </a>
+                <p class="event-organizer">
+                    Organized by
+                    <strong>{{ event["organizer_name"] }}</strong>
+                </p>
 
-                {% if logged_in_user %}
-                    <form method="POST" action="{{ url_for('toggle_favorite', event_id=event['id']) }}">
-                        <button class="button secondary" type="submit">
-                            {{ "Remove saved" if favorite else "Save event" }}
-                        </button>
-                    </form>
-                {% endif %}
-            </div>
+                <div class="event-meta-grid">
 
-            {% if logged_in_user and event["owner_id"] == logged_in_user["id"] %}
-                <div class="owner-panel">
-                    <div>
-                        <strong>Organizer tools</strong>
-                        <p>Manage this event, attendance, and reporting.</p>
+                    <div class="event-meta-card">
+                        <span class="meta-label">Date</span>
+                        <strong>{{ event["event_date"] }}</strong>
                     </div>
 
-                    <div class="owner-actions">
-                        <a class="button primary" href="{{ url_for('analytics', event_id=event['id']) }}">Analytics</a>
-                        <a class="button secondary" href="{{ url_for('edit_event', event_id=event['id']) }}">Edit</a>
+                    <div class="event-meta-card">
+                        <span class="meta-label">Time</span>
+                        <strong>{{ event["event_time"] }}</strong>
+                    </div>
 
-                        <form method="POST" action="{{ url_for('clone_event', event_id=event['id']) }}">
-                            <button class="button secondary" type="submit">Duplicate</button>
-                        </form>
+                    <div class="event-meta-card">
+                        <span class="meta-label">Location</span>
+                        <strong>{{ event["location"] }}</strong>
+                    </div>
+
+                    <div class="event-meta-card">
+                        <span class="meta-label">Attendance</span>
+                        <strong>
+                            {{ event["going_count"] }}/{{ event["max_guests"] }}
+                        </strong>
+                    </div>
+
+                </div>
+
+                <div class="event-capacity-section">
+
+                    <div class="capacity-heading">
+                        <span>Capacity</span>
+                        <span>
+                            {{ event["going_count"] }}
+                            of
+                            {{ event["max_guests"] }}
+                            spots filled
+                        </span>
+                    </div>
+
+                    {% set fill_percent =
+                        (event["going_count"] / event["max_guests"] * 100)
+                        if event["max_guests"] > 0 else 0
+                    %}
+
+                    <div class="capacity-progress">
+                        <div
+                            class="capacity-progress-fill"
+                            style="width: {{ 100 if fill_percent > 100 else fill_percent }}%;"
+                        ></div>
+                    </div>
+
+                </div>
+
+                <div class="event-description-section">
+
+                    <h2>About this event</h2>
+
+                    <p>
+                        {{ event["description"] or
+                        "No description has been added yet." }}
+                    </p>
+
+                </div>
+
+                <div class="event-action-row">
+
+                    <a
+                        href="{{ url_for('calendar_download', event_id=event['id']) }}"
+                        class="btn btn-secondary"
+                    >
+                        Add to calendar
+                    </a>
+
+                    {% if logged_in_user %}
 
                         <form
                             method="POST"
-                            action="{{ url_for('delete_event', event_id=event['id']) }}"
-                            onsubmit="return confirm('Delete this event?');"
+                            action="{{ url_for('toggle_favorite', event_id=event['id']) }}"
                         >
-                            <button class="button danger" type="submit">Delete</button>
+                            <button
+                                type="submit"
+                                class="btn btn-secondary"
+                            >
+                                {% if favorite %}
+                                    Saved
+                                {% else %}
+                                    Save event
+                                {% endif %}
+                            </button>
                         </form>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
 
-        <aside class="detail-sidebar">
-            <div class="rsvp-card">
-                <h2>Your RSVP</h2>
-
-                {% if not logged_in_user %}
-                    <p>Log in to reserve your spot.</p>
-                    <a class="button primary full" href="{{ url_for('login') }}">Log in to RSVP</a>
-
-                {% elif event["owner_id"] == logged_in_user["id"] %}
-                    <p>You are organizing this event.</p>
-                    <a class="button secondary full" href="{{ url_for('analytics', event_id=event['id']) }}">Open analytics</a>
-
-                {% elif event_is_past %}
-                    <p>This event has already ended.</p>
-
-                {% elif user_rsvp %}
-                    {% if user_rsvp["status"] == "going" %}
-                        <div class="confirmed-box">✓ You’re going</div>
-                    {% else %}
-                        <div class="waitlist-box">You’re on the waitlist</div>
                     {% endif %}
 
-                    <form method="POST" action="{{ url_for('cancel_rsvp', event_id=event['id']) }}">
-                        <button class="button secondary full" type="submit">Cancel RSVP</button>
+                </div>
+
+                {% if logged_in_user and logged_in_user["id"] == event["owner_id"] %}
+
+                    <div class="organizer-tools-card">
+
+                        <div>
+                            <h3>Organizer tools</h3>
+
+                            <p>
+                                Manage this event, attendance,
+                                and reporting.
+                            </p>
+                        </div>
+
+                        <div class="organizer-tools-actions">
+
+                            <a
+                                href="{{ url_for('analytics', event_id=event['id']) }}"
+                                class="btn btn-primary"
+                            >
+                                Analytics
+                            </a>
+
+                            <a
+                                href="{{ url_for('edit_event', event_id=event['id']) }}"
+                                class="btn btn-secondary"
+                            >
+                                Edit
+                            </a>
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('clone_event', event_id=event['id']) }}"
+                            >
+                                <button
+                                    type="submit"
+                                    class="btn btn-secondary"
+                                >
+                                    Duplicate
+                                </button>
+                            </form>
+
+                            <form
+                                method="POST"
+                                action="{{ url_for('delete_event', event_id=event['id']) }}"
+                                onsubmit="return confirm('Delete this event?');"
+                            >
+                                <button
+                                    type="submit"
+                                    class="btn btn-danger"
+                                >
+                                    Delete
+                                </button>
+                            </form>
+
+                        </div>
+
+                    </div>
+
+                {% endif %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <aside class="event-detail-sidebar">
+
+        <div class="sidebar-card">
+
+            <h2>Your RSVP</h2>
+
+            {% if logged_in_user and logged_in_user["id"] == event["owner_id"] %}
+
+                <p>
+                    You are organizing this event.
+                </p>
+
+                <a
+                    href="{{ url_for('analytics', event_id=event['id']) }}"
+                    class="btn btn-secondary btn-full"
+                >
+                    Open analytics
+                </a>
+
+            {% elif event["status"] == "cancelled" %}
+
+                <div class="sidebar-status-message">
+                    This event has been cancelled.
+                </div>
+
+            {% elif event_is_past %}
+
+                <div class="sidebar-status-message">
+                    This event has already ended.
+                </div>
+
+            {% elif logged_in_user %}
+
+                {% if user_rsvp %}
+
+                    {% if user_rsvp["status"] == "going" %}
+
+                        <div class="rsvp-confirmation">
+                            You're going
+                        </div>
+
+                    {% else %}
+
+                        <div class="rsvp-waitlist">
+                            You're on the waitlist
+                        </div>
+
+                    {% endif %}
+
+                    <form
+                        method="POST"
+                        action="{{ url_for('cancel_rsvp', event_id=event['id']) }}"
+                    >
+                        <button
+                            type="submit"
+                            class="btn btn-secondary btn-full"
+                        >
+                            Cancel RSVP
+                        </button>
                     </form>
 
                 {% else %}
-                    {% if event["going_count"] < event["max_guests"] %}
-                        <p>{{ event["max_guests"] - event["going_count"] }} spot{{ '' if event["max_guests"] - event["going_count"] == 1 else 's' }} remaining.</p>
-                        <form method="POST" action="{{ url_for('rsvp', event_id=event['id']) }}">
-                            <button class="button primary full" type="submit">Confirm RSVP</button>
+
+                    {% if event["going_count"] >= event["max_guests"] %}
+
+                        <p>
+                            This event is currently full.
+                            Join the waitlist and we'll move
+                            you in automatically if a spot opens.
+                        </p>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('rsvp', event_id=event['id']) }}"
+                        >
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-full"
+                            >
+                                Join waitlist
+                            </button>
                         </form>
+
                     {% else %}
-                        <p>This event is full. You can still join the waitlist.</p>
-                        <form method="POST" action="{{ url_for('rsvp', event_id=event['id']) }}">
-                            <button class="button primary full" type="submit">Join waitlist</button>
+
+                        <p>
+                            Reserve your spot for this event.
+                        </p>
+
+                        <form
+                            method="POST"
+                            action="{{ url_for('rsvp', event_id=event['id']) }}"
+                        >
+                            <button
+                                type="submit"
+                                class="btn btn-primary btn-full"
+                            >
+                                RSVP now
+                            </button>
                         </form>
+
                     {% endif %}
+
                 {% endif %}
+
+            {% else %}
+
+                <p>
+                    Log in to RSVP or save this event.
+                </p>
+
+                <a
+                    href="{{ url_for('login') }}"
+                    class="btn btn-primary btn-full"
+                >
+                    Log in
+                </a>
+
+            {% endif %}
+
+        </div>
+
+
+        <div class="sidebar-card">
+
+            <div class="sidebar-card-heading">
+
+                <h2>Attendance</h2>
+
+                <span class="attendance-count">
+                    {{ event["going_count"] }}
+                </span>
+
             </div>
 
-            <div class="guest-card">
-                <div class="guest-card-header">
-                    <h2>Attendance</h2>
-                    <span>{{ event["going_count"] }}</span>
+            {% if event["going_count"] == 0 %}
+
+                <p>
+                    No confirmed attendees yet.
+                </p>
+
+            {% else %}
+
+                <div class="attendee-preview-list">
+
+                    {% for attendee in attendees if attendee["status"] == "going" %}
+
+                        <div class="attendee-preview-item">
+
+                            <div class="attendee-avatar">
+                                {{ attendee["name"][0] | upper }}
+                            </div>
+
+                            <div>
+                                <strong>
+                                    {{ attendee["name"] }}
+                                </strong>
+
+                                {% if attendee["checked_in"] %}
+                                    <small>Checked in</small>
+                                {% else %}
+                                    <small>Confirmed</small>
+                                {% endif %}
+                            </div>
+
+                        </div>
+
+                    {% endfor %}
+
                 </div>
 
-                {% set going_attendees = attendees|selectattr("status", "equalto", "going")|list %}
-                {% if going_attendees %}
-                    {% for attendee in going_attendees[:8] %}
-                        <div class="guest-row">
-                            <div class="avatar">{{ attendee["name"][0]|upper }}</div>
-                            <div>
-                                <strong>{{ attendee["name"] }}</strong>
-                                <small>{{ "Checked in" if attendee["checked_in"] else "Going" }}</small>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% else %}
-                    <p class="muted">No confirmed attendees yet.</p>
-                {% endif %}
+            {% endif %}
 
-                {% if event["waitlist_count"] %}
-                    <div class="waitlist-summary">
-                        {{ event["waitlist_count"] }} on waitlist
-                    </div>
-                {% endif %}
-            </div>
-        </aside>
-    </div>
+            {% if event["waitlist_count"] > 0 %}
+
+                <div class="waitlist-count-note">
+                    {{ event["waitlist_count"] }}
+                    waiting for a spot
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </aside>
+
 </section>
+
 {% endblock %}
