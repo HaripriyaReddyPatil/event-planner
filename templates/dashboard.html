@@ -386,9 +386,11 @@
                             {% else %}
 
                                 <div class="event-cover-placeholder">
+
                                     <div class="placeholder-mark">
                                         EP
                                     </div>
+
                                 </div>
 
                             {% endif %}
@@ -401,13 +403,13 @@
                                 </span>
 
 
-                                {% if event["status"] == "going" %}
+                                {% if event["rsvp_status"] == "going" %}
 
                                     <span class="event-state event-state-open">
                                         Going
                                     </span>
 
-                                {% else %}
+                                {% elif event["rsvp_status"] == "waitlist" %}
 
                                     <span class="event-state event-state-full">
                                         Waitlist
@@ -540,9 +542,11 @@
                             {% else %}
 
                                 <div class="event-cover-placeholder">
+
                                     <div class="placeholder-mark">
                                         EP
                                     </div>
+
                                 </div>
 
                             {% endif %}
@@ -553,6 +557,14 @@
                                 <span class="category-chip">
                                     {{ event["category"] }}
                                 </span>
+
+                                {% if event["status"] == "cancelled" %}
+
+                                    <span class="event-state event-state-cancelled">
+                                        Cancelled
+                                    </span>
+
+                                {% endif %}
 
                             </div>
 

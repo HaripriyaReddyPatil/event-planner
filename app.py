@@ -35,6 +35,12 @@ from helpers import (
     calculate_percentage,
 )
 
+from services import (
+    get_event_stats,
+    promote_waitlist as promote_waitlist_service,
+    get_user_event_lists,
+)
+
 
 # ============================================================
 # APPLICATION CONFIGURATION
@@ -45,8 +51,8 @@ app = Flask(__name__)
 app.config.from_object(Config)
 
 
-# Keep this variable because the test suite changes DB_NAME
-# to point to a temporary SQLite database.
+# Keep DB_NAME because the automated tests temporarily
+# replace it with a test database path.
 DB_NAME = app.config["DATABASE"]
 
 
@@ -68,27 +74,33 @@ CATEGORIES = [
 
 def get_db():
     """
-    Return a database connection using the application's
-    currently selected database path.
+    Return a database connection using the currently
+    selected application database.
     """
 
-    return get_db_connection(DB_NAME)
+    return get_db_connection(
+        DB_NAME
+    )
 
 
 def init_db():
     """
-    Create the application's database tables.
+    Create the application database tables.
     """
 
-    initialize_database(DB_NAME)
+    initialize_database(
+        DB_NAME
+    )
 
 
 def migrate_db():
     """
-    Apply safe database schema upgrades.
+    Apply safe schema upgrades to the database.
     """
 
-    migrate_database(DB_NAME)
+    migrate_database(
+        DB_NAME
+    )
 
 
 # ============================================================
@@ -100,7 +112,9 @@ def current_user():
     Return the currently authenticated user.
     """
 
-    user_id = session.get("user_id")
+    user_id = session.get(
+        "user_id"
+    )
 
     if not user_id:
         return None
@@ -126,10 +140,10 @@ def current_user():
 
 def login_required():
     """
-    Return False if no user is logged in.
+    Return False if no user is signed in.
 
-    The existing project uses this helper directly
-    instead of a route decorator.
+    The application currently uses this helper directly
+    inside routes rather than as a decorator.
     """
 
     if not session.get("user_id"):
@@ -145,141 +159,31 @@ def login_required():
 
 
 # ============================================================
-# EVENT HELPERS
+# SERVICE WRAPPERS
 # ============================================================
 
 def event_stats(event_id):
     """
-    Load an event together with organizer and attendance stats.
+    Retrieve event information and attendance statistics
+    using the service layer.
     """
 
-    conn = get_db()
-
-    event = conn.execute(
-        """
-        SELECT
-            e.*,
-            u.name AS organizer_name,
-
-            SUM(
-                CASE
-                    WHEN r.status = 'going'
-                    THEN 1
-                    ELSE 0
-                END
-            ) AS going_count,
-
-            SUM(
-                CASE
-                    WHEN r.status = 'waitlist'
-                    THEN 1
-                    ELSE 0
-                END
-            ) AS waitlist_count,
-
-            SUM(
-                CASE
-                    WHEN r.status = 'going'
-                    AND r.checked_in = 1
-                    THEN 1
-                    ELSE 0
-                END
-            ) AS checked_in_count
-
-        FROM events e
-
-        JOIN users u
-            ON e.owner_id = u.id
-
-        LEFT JOIN rsvps r
-            ON e.id = r.event_id
-
-        WHERE e.id = ?
-
-        GROUP BY e.id
-        """,
-        (event_id,),
-    ).fetchone()
-
-    conn.close()
-
-    if event:
-        event = dict(event)
-
-        event["going_count"] = (
-            event["going_count"] or 0
-        )
-
-        event["waitlist_count"] = (
-            event["waitlist_count"] or 0
-        )
-
-        event["checked_in_count"] = (
-            event["checked_in_count"] or 0
-        )
-
-    return event
+    return get_event_stats(
+        DB_NAME,
+        event_id,
+    )
 
 
 def promote_waitlist(event_id):
     """
-    Promote the earliest waitlisted attendee if a confirmed
-    attendee cancels and a spot becomes available.
+    Promote the earliest waitlisted attendee when
+    capacity becomes available.
     """
 
-    conn = get_db()
-
-    event = conn.execute(
-        """
-        SELECT max_guests
-        FROM events
-        WHERE id = ?
-        """,
-        (event_id,),
-    ).fetchone()
-
-    if not event:
-        conn.close()
-        return
-
-    going_count = conn.execute(
-        """
-        SELECT COUNT(*)
-        FROM rsvps
-        WHERE event_id = ?
-        AND status = 'going'
-        """,
-        (event_id,),
-    ).fetchone()[0]
-
-    if going_count < event["max_guests"]:
-
-        next_person = conn.execute(
-            """
-            SELECT id
-            FROM rsvps
-            WHERE event_id = ?
-            AND status = 'waitlist'
-            ORDER BY created_at ASC
-            LIMIT 1
-            """,
-            (event_id,),
-        ).fetchone()
-
-        if next_person:
-
-            conn.execute(
-                """
-                UPDATE rsvps
-                SET status = 'going'
-                WHERE id = ?
-                """,
-                (next_person["id"],),
-            )
-
-            conn.commit()
-
-    conn.close()
+    return promote_waitlist_service(
+        DB_NAME,
+        event_id,
+    )
 
 
 # ============================================================
@@ -378,7 +282,9 @@ def home():
             AND e.category = ?
         """
 
-        params.append(category)
+        params.append(
+            category
+        )
 
     query += """
         GROUP BY e.id
@@ -421,7 +327,8 @@ def home():
     for event in events:
 
         event["going_count"] = (
-            event["going_count"] or 0
+            event["going_count"]
+            or 0
         )
 
     upcoming = [
@@ -443,19 +350,24 @@ def home():
 
 
 # ============================================================
-# REGISTER
+# REGISTRATION
 # ============================================================
 
 @app.route(
     "/register",
-    methods=["GET", "POST"],
+    methods=[
+        "GET",
+        "POST",
+    ],
 )
 def register():
 
     if session.get("user_id"):
 
         return redirect(
-            url_for("dashboard")
+            url_for(
+                "dashboard"
+            )
         )
 
     if request.method == "POST":
@@ -554,7 +466,9 @@ def register():
         )
 
         return redirect(
-            url_for("dashboard")
+            url_for(
+                "dashboard"
+            )
         )
 
     return render_template(
@@ -568,14 +482,19 @@ def register():
 
 @app.route(
     "/login",
-    methods=["GET", "POST"],
+    methods=[
+        "GET",
+        "POST",
+    ],
 )
 def login():
 
     if session.get("user_id"):
 
         return redirect(
-            url_for("dashboard")
+            url_for(
+                "dashboard"
+            )
         )
 
     if request.method == "POST":
@@ -627,7 +546,8 @@ def login():
         )
 
         first_name = (
-            user["name"].split()[0]
+            user["name"]
+            .split()[0]
         )
 
         flash(
@@ -636,7 +556,9 @@ def login():
         )
 
         return redirect(
-            url_for("dashboard")
+            url_for(
+                "dashboard"
+            )
         )
 
     return render_template(
@@ -659,7 +581,9 @@ def logout():
     )
 
     return redirect(
-        url_for("home")
+        url_for(
+            "home"
+        )
     )
 
 
@@ -673,130 +597,23 @@ def dashboard():
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
-    user_id = session["user_id"]
-
-    conn = get_db()
-
-    created = [
-        dict(row)
-        for row in conn.execute(
-            """
-            SELECT
-                e.*,
-
-                SUM(
-                    CASE
-                        WHEN r.status = 'going'
-                        THEN 1
-                        ELSE 0
-                    END
-                ) AS going_count,
-
-                SUM(
-                    CASE
-                        WHEN r.status = 'waitlist'
-                        THEN 1
-                        ELSE 0
-                    END
-                ) AS waitlist_count,
-
-                SUM(
-                    CASE
-                        WHEN r.status = 'going'
-                        AND r.checked_in = 1
-                        THEN 1
-                        ELSE 0
-                    END
-                ) AS checked_in_count
-
-            FROM events e
-
-            LEFT JOIN rsvps r
-                ON e.id = r.event_id
-
-            WHERE e.owner_id = ?
-
-            GROUP BY e.id
-
-            ORDER BY
-                e.event_date,
-                e.event_time
-            """,
-            (user_id,),
-        ).fetchall()
+    user_id = session[
+        "user_id"
     ]
 
-    joined = [
-        dict(row)
-        for row in conn.execute(
-            """
-            SELECT
-                e.*,
-                u.name AS organizer_name,
-                r.status AS rsvp_status
-
-            FROM rsvps r
-
-            JOIN events e
-                ON r.event_id = e.id
-
-            JOIN users u
-                ON e.owner_id = u.id
-
-            WHERE r.user_id = ?
-
-            ORDER BY
-                e.event_date,
-                e.event_time
-            """,
-            (user_id,),
-        ).fetchall()
-    ]
-
-    favorites = [
-        dict(row)
-        for row in conn.execute(
-            """
-            SELECT
-                e.*,
-                u.name AS organizer_name
-
-            FROM favorites f
-
-            JOIN events e
-                ON f.event_id = e.id
-
-            JOIN users u
-                ON e.owner_id = u.id
-
-            WHERE f.user_id = ?
-
-            ORDER BY
-                e.event_date,
-                e.event_time
-            """,
-            (user_id,),
-        ).fetchall()
-    ]
-
-    conn.close()
-
-    for event in created:
-
-        event["going_count"] = (
-            event["going_count"] or 0
-        )
-
-        event["waitlist_count"] = (
-            event["waitlist_count"] or 0
-        )
-
-        event["checked_in_count"] = (
-            event["checked_in_count"] or 0
-        )
+    (
+        created,
+        joined,
+        favorites,
+    ) = get_user_event_lists(
+        DB_NAME,
+        user_id,
+    )
 
     return render_template(
         "dashboard.html",
@@ -812,53 +629,65 @@ def dashboard():
 
 @app.route(
     "/events/create",
-    methods=["GET", "POST"],
+    methods=[
+        "GET",
+        "POST",
+    ],
 )
 def create_event():
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     if request.method == "POST":
 
         data = {
-            "title": request.form.get(
-                "title",
-                "",
-            ).strip(),
+            "title":
+                request.form.get(
+                    "title",
+                    "",
+                ).strip(),
 
-            "category": request.form.get(
-                "category",
-                "Other",
-            ),
+            "category":
+                request.form.get(
+                    "category",
+                    "Other",
+                ),
 
-            "event_date": request.form.get(
-                "event_date",
-                "",
-            ),
+            "event_date":
+                request.form.get(
+                    "event_date",
+                    "",
+                ),
 
-            "event_time": request.form.get(
-                "event_time",
-                "",
-            ),
+            "event_time":
+                request.form.get(
+                    "event_time",
+                    "",
+                ),
 
-            "location": request.form.get(
-                "location",
-                "",
-            ).strip(),
+            "location":
+                request.form.get(
+                    "location",
+                    "",
+                ).strip(),
 
-            "description": request.form.get(
-                "description",
-                "",
-            ).strip(),
+            "description":
+                request.form.get(
+                    "description",
+                    "",
+                ).strip(),
 
-            "image_url": request.form.get(
-                "image_url",
-                "",
-            ).strip(),
+            "image_url":
+                request.form.get(
+                    "image_url",
+                    "",
+                ).strip(),
         }
 
         try:
@@ -965,7 +794,9 @@ def create_event():
 @app.route(
     "/events/<int:event_id>"
 )
-def event_detail(event_id):
+def event_detail(
+    event_id
+):
 
     event = event_stats(
         event_id
@@ -1008,7 +839,9 @@ def event_detail(event_id):
     user_rsvp = None
     favorite = None
 
-    if session.get("user_id"):
+    if session.get(
+        "user_id"
+    ):
 
         user_rsvp = conn.execute(
             """
@@ -1057,14 +890,21 @@ def event_detail(event_id):
 
 @app.route(
     "/events/<int:event_id>/edit",
-    methods=["GET", "POST"],
+    methods=[
+        "GET",
+        "POST",
+    ],
 )
-def edit_event(event_id):
+def edit_event(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1238,12 +1078,16 @@ def edit_event(event_id):
     "/events/<int:event_id>/delete",
     methods=["POST"],
 )
-def delete_event(event_id):
+def delete_event(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1278,7 +1122,9 @@ def delete_event(event_id):
     )
 
     return redirect(
-        url_for("dashboard")
+        url_for(
+            "dashboard"
+        )
     )
 
 
@@ -1290,12 +1136,16 @@ def delete_event(event_id):
     "/events/<int:event_id>/clone",
     methods=["POST"],
 )
-def clone_event(event_id):
+def clone_event(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1380,12 +1230,16 @@ def clone_event(event_id):
     "/events/<int:event_id>/rsvp",
     methods=["POST"],
 )
-def rsvp(event_id):
+def rsvp(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1412,7 +1266,10 @@ def rsvp(event_id):
             )
         )
 
-    if event["status"] == "cancelled":
+    if (
+        event["status"]
+        == "cancelled"
+    ):
 
         flash(
             "This event has been cancelled.",
@@ -1522,12 +1379,16 @@ def rsvp(event_id):
     "/events/<int:event_id>/cancel-rsvp",
     methods=["POST"],
 )
-def cancel_rsvp(event_id):
+def cancel_rsvp(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     conn = get_db()
@@ -1590,12 +1451,16 @@ def cancel_rsvp(event_id):
     "/events/<int:event_id>/favorite",
     methods=["POST"],
 )
-def toggle_favorite(event_id):
+def toggle_favorite(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1627,7 +1492,9 @@ def toggle_favorite(event_id):
             DELETE FROM favorites
             WHERE id = ?
             """,
-            (existing["id"],),
+            (
+                existing["id"],
+            ),
         )
 
         flash(
@@ -1676,12 +1543,16 @@ def toggle_favorite(event_id):
 @app.route(
     "/events/<int:event_id>/analytics"
 )
-def analytics(event_id):
+def analytics(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1760,7 +1631,9 @@ def toggle_checkin(
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1833,12 +1706,16 @@ def toggle_checkin(
 @app.route(
     "/events/<int:event_id>/export"
 )
-def export_attendees(event_id):
+def export_attendees(
+    event_id
+):
 
     if not login_required():
 
         return redirect(
-            url_for("login")
+            url_for(
+                "login"
+            )
         )
 
     event = event_stats(
@@ -1934,7 +1811,9 @@ def export_attendees(event_id):
 @app.route(
     "/events/<int:event_id>/calendar"
 )
-def calendar_download(event_id):
+def calendar_download(
+    event_id
+):
 
     event = event_stats(
         event_id
@@ -1956,7 +1835,8 @@ def calendar_download(event_id):
     )
 
     safe_description = (
-        event["description"] or ""
+        event["description"]
+        or ""
     ).replace(
         "\n",
         "\\n",
@@ -1964,14 +1844,26 @@ def calendar_download(event_id):
 
     safe_title = (
         event["title"]
-        .replace(",", "\\,")
-        .replace(";", "\\;")
+        .replace(
+            ",",
+            "\\,",
+        )
+        .replace(
+            ";",
+            "\\;",
+        )
     )
 
     safe_location = (
         event["location"]
-        .replace(",", "\\,")
-        .replace(";", "\\;")
+        .replace(
+            ",",
+            "\\,",
+        )
+        .replace(
+            ";",
+            "\\;",
+        )
     )
 
     ics = f"""BEGIN:VCALENDAR
@@ -1993,7 +1885,7 @@ END:VCALENDAR
         mimetype="text/calendar",
         headers={
             "Content-Disposition":
-                f'attachment; filename="event_{event_id}.ics'
+                f'attachment; filename="event_{event_id}.ics"'
         },
     )
 
@@ -2003,7 +1895,9 @@ END:VCALENDAR
 # ============================================================
 
 @app.errorhandler(403)
-def forbidden(_error):
+def forbidden(
+    _error
+):
 
     return render_template(
         "error.html",
@@ -2017,7 +1911,9 @@ def forbidden(_error):
 
 
 @app.errorhandler(404)
-def not_found(_error):
+def not_found(
+    _error
+):
 
     return render_template(
         "error.html",
