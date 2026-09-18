@@ -4,3 +4,4 @@ __pycache__/
 event_planner.db
 .DS_Store
 .env
+event_planner_backup.db
