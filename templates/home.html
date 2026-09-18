@@ -1,127 +1,313 @@
 {% extends "base.html" %}
-{% block title %}Explore Events{% endblock %}
+
+{% block title %}Discover Events{% endblock %}
 
 {% block content %}
-<section class="hero">
+
+<section class="hero hero-upgraded">
     <div class="page-container hero-grid">
-        <div>
-            <div class="eyebrow">Discover · Organize · Connect</div>
-            <h1>Plan events people actually want to attend.</h1>
+
+        <div class="hero-copy">
+            <div class="eyebrow">Event management, simplified</div>
+
+            <h1>
+                Discover experiences.
+                <span>Bring people together.</span>
+            </h1>
+
             <p>
-                Create events, manage attendance, save favorites, join waitlists,
-                and track check-ins from one clean dashboard.
+                Find events worth attending or create your own.
+                Manage RSVPs, waitlists, attendance, saved events,
+                analytics, and more from one platform.
             </p>
 
             <div class="hero-actions">
                 {% if logged_in_user %}
                     <a class="button primary large" href="{{ url_for('create_event') }}">
-                        Create an event
+                        + Create event
                     </a>
+
                     <a class="button secondary large" href="{{ url_for('dashboard') }}">
-                        View dashboard
+                        My dashboard
                     </a>
                 {% else %}
                     <a class="button primary large" href="{{ url_for('register') }}">
-                        Create an account
+                        Get started
                     </a>
-                    <a class="button secondary large" href="{{ url_for('login') }}">
-                        Log in
+
+                    <a class="button secondary large" href="#discover">
+                        Explore events
                     </a>
                 {% endif %}
             </div>
-        </div>
 
-        <div class="hero-panel">
-            <div class="hero-number">{{ events|length }}</div>
-            <div class="hero-label">upcoming event{{ '' if events|length == 1 else 's' }}</div>
-
-            <div class="feature-list">
-                <div><span>✓</span> RSVP + automatic waitlist</div>
-                <div><span>✓</span> Organizer analytics</div>
-                <div><span>✓</span> Attendance check-in</div>
-                <div><span>✓</span> CSV + calendar export</div>
+            <div class="hero-trust-row">
+                <span>✓ Smart waitlists</span>
+                <span>✓ Organizer analytics</span>
+                <span>✓ Attendance tracking</span>
             </div>
         </div>
+
+        <div class="hero-panel hero-dashboard-preview">
+
+            <div class="preview-header">
+                <div>
+                    <span class="preview-label">Live platform</span>
+                    <strong>Event overview</strong>
+                </div>
+
+                <span class="live-dot">
+                    <i></i>
+                    Active
+                </span>
+            </div>
+
+            <div class="preview-big-stat">
+                <strong>{{ events|length }}</strong>
+                <span>upcoming event{{ '' if events|length == 1 else 's' }}</span>
+            </div>
+
+            <div class="preview-grid">
+                <div>
+                    <span>RSVP</span>
+                    <strong>Instant</strong>
+                </div>
+
+                <div>
+                    <span>Waitlist</span>
+                    <strong>Automatic</strong>
+                </div>
+
+                <div>
+                    <span>Analytics</span>
+                    <strong>Built in</strong>
+                </div>
+
+                <div>
+                    <span>Calendar</span>
+                    <strong>Export</strong>
+                </div>
+            </div>
+
+        </div>
+
     </div>
 </section>
 
-<section class="page-container section">
-    <div class="section-header">
+<section class="page-container section" id="discover">
+
+    <div class="section-header upgraded-section-header">
         <div>
-            <div class="eyebrow dark">Explore</div>
-            <h2>Upcoming events</h2>
+            <div class="eyebrow dark">Discover</div>
+            <h2>Events happening next</h2>
+            <p>Search by event, location, or category and reserve your place.</p>
         </div>
+
+        {% if logged_in_user %}
+            <a href="{{ url_for('create_event') }}" class="button secondary">
+                Create event
+            </a>
+        {% endif %}
     </div>
 
-    <form class="filter-bar" method="GET">
-        <input
-            type="text"
-            name="q"
-            value="{{ q }}"
-            placeholder="Search event, location, or keyword"
-        >
+    <form class="filter-bar upgraded-filter" method="GET">
+
+        <div class="search-input-wrap">
+            <span>⌕</span>
+            <input
+                type="text"
+                name="q"
+                value="{{ q }}"
+                placeholder="Search events, locations, or keywords"
+            >
+        </div>
 
         <select name="category">
             <option value="">All categories</option>
+
             {% for category in categories %}
-                <option value="{{ category }}" {% if selected_category == category %}selected{% endif %}>
+                <option
+                    value="{{ category }}"
+                    {% if selected_category == category %}selected{% endif %}
+                >
                     {{ category }}
                 </option>
             {% endfor %}
         </select>
 
         <select name="sort">
-            <option value="soonest" {% if sort == 'soonest' %}selected{% endif %}>Soonest</option>
-            <option value="popular" {% if sort == 'popular' %}selected{% endif %}>Most popular</option>
-            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>Newest</option>
+            <option value="soonest" {% if sort == 'soonest' %}selected{% endif %}>
+                Soonest
+            </option>
+
+            <option value="popular" {% if sort == 'popular' %}selected{% endif %}>
+                Most popular
+            </option>
+
+            <option value="newest" {% if sort == 'newest' %}selected{% endif %}>
+                Newly added
+            </option>
         </select>
 
-        <button class="button primary" type="submit">Search</button>
+        <button class="button primary" type="submit">
+            Search
+        </button>
     </form>
 
     {% if events %}
-        <div class="event-grid">
+
+        <div class="event-grid upgraded-event-grid">
+
             {% for event in events %}
-                <article class="event-card">
-                    <div class="event-card-top">
-                        <span class="badge">{{ event["category"] }}</span>
-                        <span class="capacity">
-                            {{ event["going_count"] }}/{{ event["max_guests"] }}
-                        </span>
-                    </div>
 
-                    <h3>{{ event["title"] }}</h3>
+                {% set capacity_percent =
+                    ((event["going_count"] / event["max_guests"]) * 100)
+                    if event["max_guests"] else 0
+                %}
 
-                    <div class="event-meta">
-                        <div>
-                            <span class="meta-label">Date</span>
-                            <strong>{{ event["event_date"] }}</strong>
+                {% if capacity_percent > 100 %}
+                    {% set capacity_percent = 100 %}
+                {% endif %}
+
+                <article class="event-card event-card-upgraded">
+
+                    <a
+                        href="{{ url_for('event_detail', event_id=event['id']) }}"
+                        class="event-cover-link"
+                    >
+                        {% if event["image_url"] %}
+                            <div
+                                class="event-cover"
+                                style="background-image: url('{{ event["image_url"] }}');"
+                            >
+                        {% else %}
+                            <div class="event-cover event-cover-placeholder">
+                                <div class="placeholder-mark">
+                                    {{ event["category"][0] }}
+                                </div>
+                        {% endif %}
+
+                            <div class="event-cover-overlay">
+                                <span class="category-chip">
+                                    {{ event["category"] }}
+                                </span>
+
+                                {% if event["status"] == "cancelled" %}
+                                    <span class="event-state cancelled">
+                                        Cancelled
+                                    </span>
+                                {% elif event["going_count"] >= event["max_guests"] %}
+                                    <span class="event-state full">
+                                        Full · Waitlist
+                                    </span>
+                                {% else %}
+                                    <span class="event-state open">
+                                        RSVP open
+                                    </span>
+                                {% endif %}
+                            </div>
                         </div>
-                        <div>
-                            <span class="meta-label">Time</span>
-                            <strong>{{ event["event_time"] }}</strong>
+                    </a>
+
+                    <div class="event-card-body">
+
+                        <div class="event-date-row">
+                            <div class="date-tile">
+                                <span>
+                                    {{ event["event_date"][5:7] }}/{{ event["event_date"][8:10] }}
+                                </span>
+                            </div>
+
+                            <div>
+                                <span class="event-time-label">
+                                    {{ event["event_date"] }} · {{ event["event_time"] }}
+                                </span>
+
+                                <h3>
+                                    <a href="{{ url_for('event_detail', event_id=event['id']) }}">
+                                        {{ event["title"] }}
+                                    </a>
+                                </h3>
+                            </div>
                         </div>
+
+                        <p class="event-location">
+                            <span>⌖</span>
+                            {{ event["location"] }}
+                        </p>
+
+                        <p class="description">
+                            {{ event["description"] or "More event information coming soon." }}
+                        </p>
+
+                        <div class="capacity-section">
+
+                            <div class="capacity-copy">
+                                <span>
+                                    {{ event["going_count"] }} attending
+                                </span>
+
+                                <span>
+                                    {{ event["max_guests"] - event["going_count"] if event["going_count"] < event["max_guests"] else 0 }}
+                                    spots left
+                                </span>
+                            </div>
+
+                            <div class="capacity-progress">
+                                <div
+                                    class="capacity-progress-fill"
+                                    style="width: {{ capacity_percent }}%;"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="organizer">
+                                <span class="mini-avatar">
+                                    {{ event["organizer_name"][0]|upper }}
+                                </span>
+
+                                <span>
+                                    By {{ event["organizer_name"] }}
+                                </span>
+                            </div>
+
+                            <a
+                                class="text-link"
+                                href="{{ url_for('event_detail', event_id=event['id']) }}"
+                            >
+                                View event →
+                            </a>
+                        </div>
+
                     </div>
 
-                    <p class="location">📍 {{ event["location"] }}</p>
-                    <p class="description">
-                        {{ event["description"] or "No description added." }}
-                    </p>
-
-                    <div class="card-footer">
-                        <span class="organizer">By {{ event["organizer_name"] }}</span>
-                        <a class="text-link" href="{{ url_for('event_detail', event_id=event['id']) }}">
-                            View event →
-                        </a>
-                    </div>
                 </article>
+
             {% endfor %}
+
         </div>
+
     {% else %}
-        <div class="empty-state">
-            <h3>No events found</h3>
-            <p>Try another search or create a new event.</p>
+
+        <div class="empty-state upgraded-empty">
+            <div class="empty-icon">⌕</div>
+
+            <h3>No matching events</h3>
+
+            <p>
+                Try changing your search or category filters.
+            </p>
+
+            {% if logged_in_user %}
+                <a class="button primary" href="{{ url_for('create_event') }}">
+                    Create the first event
+                </a>
+            {% endif %}
         </div>
+
     {% endif %}
+
 </section>
+
 {% endblock %}

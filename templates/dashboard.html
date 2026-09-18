@@ -2,131 +2,646 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block content %}
+
 <section class="page-container section">
-    <div class="dashboard-header">
+
+    <div class="dashboard-header dashboard-header-upgraded">
+
         <div>
             <div class="eyebrow dark">Dashboard</div>
-            <h1>Hi, {{ logged_in_user["name"].split()[0] }}</h1>
-            <p>Everything you organize, join, and save in one place.</p>
+
+            <h1>
+                Hi, {{ logged_in_user["name"].split()[0] }}
+            </h1>
+
+            <p>
+                Everything you organize, join, and save in one place.
+            </p>
         </div>
 
-        <a class="button primary large" href="{{ url_for('create_event') }}">
+        <a
+            class="button primary large"
+            href="{{ url_for('create_event') }}"
+        >
             + Create Event
         </a>
+
     </div>
 
-    <div class="stat-grid">
-        <div class="stat-card">
-            <span>Events created</span>
-            <strong>{{ created_events|length }}</strong>
+
+    <div class="stat-grid dashboard-stat-grid">
+
+        <div class="stat-card stat-card-upgraded">
+
+            <div class="stat-icon">
+                +
+            </div>
+
+            <div>
+                <span>Events created</span>
+
+                <strong>
+                    {{ created_events|length }}
+                </strong>
+            </div>
+
         </div>
-        <div class="stat-card">
-            <span>Events joined</span>
-            <strong>{{ joined_events|length }}</strong>
+
+
+        <div class="stat-card stat-card-upgraded">
+
+            <div class="stat-icon">
+                ✓
+            </div>
+
+            <div>
+                <span>Events joined</span>
+
+                <strong>
+                    {{ joined_events|length }}
+                </strong>
+            </div>
+
         </div>
-        <div class="stat-card">
-            <span>Saved events</span>
-            <strong>{{ favorite_events|length }}</strong>
+
+
+        <div class="stat-card stat-card-upgraded">
+
+            <div class="stat-icon">
+                ★
+            </div>
+
+            <div>
+                <span>Saved events</span>
+
+                <strong>
+                    {{ favorite_events|length }}
+                </strong>
+            </div>
+
         </div>
-        <div class="stat-card">
-            <span>Total RSVPs received</span>
-            <strong>{{ created_events|sum(attribute='going_count') if created_events else 0 }}</strong>
+
+
+        <div class="stat-card stat-card-upgraded">
+
+            <div class="stat-icon">
+                ↗
+            </div>
+
+            <div>
+                <span>Total RSVPs received</span>
+
+                <strong>
+                    {{
+                        created_events
+                        | sum(attribute='going_count')
+                        if created_events
+                        else 0
+                    }}
+                </strong>
+            </div>
+
         </div>
+
     </div>
+
+
+    <!-- =====================================================
+         EVENTS YOU ORGANIZE
+         ===================================================== -->
 
     <div class="dashboard-block">
+
         <div class="section-header">
+
             <div>
                 <h2>Events you organize</h2>
-                <p>Manage attendance, analytics, and exports.</p>
+
+                <p>
+                    Manage attendance, analytics, and exports.
+                </p>
             </div>
+
         </div>
+
 
         {% if created_events %}
-            <div class="table-card">
-                <div class="table-head">
-                    <span>Event</span>
-                    <span>Going</span>
-                    <span>Waitlist</span>
-                    <span>Checked in</span>
-                    <span></span>
-                </div>
+
+            <div class="dashboard-event-list">
 
                 {% for event in created_events %}
-                    <div class="table-row">
-                        <div>
-                            <strong>{{ event["title"] }}</strong>
-                            <small>{{ event["event_date"] }} · {{ event["location"] }}</small>
+
+                    <article class="dashboard-event-card">
+
+                        <div class="dashboard-event-media">
+
+                            {% if event["image_url"] %}
+
+                                <img
+                                    src="{{ event['image_url'] }}"
+                                    alt="{{ event['title'] }}"
+                                >
+
+                            {% else %}
+
+                                <div class="dashboard-event-placeholder">
+                                    EP
+                                </div>
+
+                            {% endif %}
+
                         </div>
-                        <span>{{ event["going_count"] }}/{{ event["max_guests"] }}</span>
-                        <span>{{ event["waitlist_count"] }}</span>
-                        <span>{{ event["checked_in_count"] }}</span>
-                        <a class="text-link" href="{{ url_for('analytics', event_id=event['id']) }}">Analytics →</a>
-                    </div>
+
+
+                        <div class="dashboard-event-content">
+
+                            <div class="dashboard-event-top">
+
+                                <div>
+
+                                    <div class="dashboard-event-badges">
+
+                                        <span class="category-chip">
+                                            {{ event["category"] }}
+                                        </span>
+
+                                        {% if event["status"] == "cancelled" %}
+
+                                            <span class="event-state event-state-cancelled">
+                                                Cancelled
+                                            </span>
+
+                                        {% else %}
+
+                                            <span class="event-state event-state-open">
+                                                Active
+                                            </span>
+
+                                        {% endif %}
+
+                                    </div>
+
+
+                                    <h3>
+                                        {{ event["title"] }}
+                                    </h3>
+
+
+                                    <p class="dashboard-event-meta">
+                                        {{ event["event_date"] }}
+                                        ·
+                                        {{ event["event_time"] }}
+                                        ·
+                                        {{ event["location"] }}
+                                    </p>
+
+                                </div>
+
+
+                                <a
+                                    class="button secondary small-button"
+                                    href="{{ url_for('event_detail', event_id=event['id']) }}"
+                                >
+                                    View
+                                </a>
+
+                            </div>
+
+
+                            <div class="dashboard-event-stats">
+
+                                <div>
+                                    <span>Going</span>
+
+                                    <strong>
+                                        {{ event["going_count"] }}/{{ event["max_guests"] }}
+                                    </strong>
+                                </div>
+
+
+                                <div>
+                                    <span>Waitlist</span>
+
+                                    <strong>
+                                        {{ event["waitlist_count"] }}
+                                    </strong>
+                                </div>
+
+
+                                <div>
+                                    <span>Checked in</span>
+
+                                    <strong>
+                                        {{ event["checked_in_count"] }}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+
+                            {% set fill_percent =
+                                (
+                                    event["going_count"]
+                                    / event["max_guests"]
+                                    * 100
+                                )
+                                if event["max_guests"] > 0
+                                else 0
+                            %}
+
+
+                            <div class="dashboard-capacity">
+
+                                <div class="capacity-row">
+
+                                    <span>
+                                        Capacity
+                                    </span>
+
+                                    <span>
+                                        {{ event["going_count"] }}
+                                        of
+                                        {{ event["max_guests"] }}
+                                        filled
+                                    </span>
+
+                                </div>
+
+
+                                <div class="capacity-progress">
+
+                                    <div
+                                        class="capacity-progress-fill"
+                                        style="width:
+                                            {{ 100 if fill_percent > 100 else fill_percent }}%;
+                                        "
+                                    ></div>
+
+                                </div>
+
+                            </div>
+
+
+                            <div class="dashboard-event-actions">
+
+                                <a
+                                    class="text-link"
+                                    href="{{ url_for('analytics', event_id=event['id']) }}"
+                                >
+                                    Analytics →
+                                </a>
+
+                                <a
+                                    class="text-link"
+                                    href="{{ url_for('edit_event', event_id=event['id']) }}"
+                                >
+                                    Edit
+                                </a>
+
+                            </div>
+
+                        </div>
+
+                    </article>
+
                 {% endfor %}
+
             </div>
+
+
         {% else %}
-            <div class="empty-state small">
-                <h3>No events created yet</h3>
-                <a class="button primary" href="{{ url_for('create_event') }}">Create your first event</a>
+
+            <div class="dashboard-empty-card">
+
+                <div class="empty-icon">
+                    +
+                </div>
+
+                <h3>
+                    No events created yet
+                </h3>
+
+                <p>
+                    Create your first event and start managing
+                    RSVPs, attendance, and analytics.
+                </p>
+
+                <a
+                    class="button primary"
+                    href="{{ url_for('create_event') }}"
+                >
+                    Create your first event
+                </a>
+
             </div>
+
         {% endif %}
+
     </div>
 
+
+    <!-- =====================================================
+         YOUR RSVPS
+         ===================================================== -->
+
     <div class="dashboard-block">
+
         <div class="section-header">
+
             <div>
                 <h2>Your RSVPs</h2>
-                <p>Events you are attending or waiting for.</p>
+
+                <p>
+                    Events you are attending or waiting for.
+                </p>
             </div>
+
+            <a
+                class="text-link"
+                href="{{ url_for('home') }}"
+            >
+                Explore events →
+            </a>
+
         </div>
+
 
         {% if joined_events %}
-            <div class="event-grid compact">
+
+            <div class="upgraded-event-grid">
+
                 {% for event in joined_events %}
-                    <article class="event-card">
-                        <div class="event-card-top">
-                            <span class="badge">{{ event["category"] }}</span>
-                            <span class="status-pill {{ event['status'] }}">{{ event["status"] }}</span>
+
+                    <article class="event-card-upgraded">
+
+                        <div class="event-cover">
+
+                            {% if event["image_url"] %}
+
+                                <img
+                                    src="{{ event['image_url'] }}"
+                                    alt="{{ event['title'] }}"
+                                >
+
+                            {% else %}
+
+                                <div class="event-cover-placeholder">
+
+                                    <div class="placeholder-mark">
+                                        EP
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <div class="event-cover-overlay">
+
+                                <span class="category-chip">
+                                    {{ event["category"] }}
+                                </span>
+
+
+                                {% if event["rsvp_status"] == "going" %}
+
+                                    <span class="event-state event-state-open">
+                                        Going
+                                    </span>
+
+                                {% elif event["rsvp_status"] == "waitlist" %}
+
+                                    <span class="event-state event-state-full">
+                                        Waitlist
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
                         </div>
-                        <h3>{{ event["title"] }}</h3>
-                        <p>{{ event["event_date"] }} at {{ event["event_time"] }}</p>
-                        <p class="location">📍 {{ event["location"] }}</p>
-                        <a class="text-link" href="{{ url_for('event_detail', event_id=event['id']) }}">Open event →</a>
+
+
+                        <div class="event-card-body">
+
+                            <h3>
+                                {{ event["title"] }}
+                            </h3>
+
+                            <p class="event-time-label">
+                                {{ event["event_date"] }}
+                                at
+                                {{ event["event_time"] }}
+                            </p>
+
+                            <p class="event-location">
+                                {{ event["location"] }}
+                            </p>
+
+
+                            <div class="card-footer">
+
+                                <div>
+
+                                    <small class="muted">
+                                        Organized by
+                                    </small>
+
+                                    <strong>
+                                        {{ event["organizer_name"] }}
+                                    </strong>
+
+                                </div>
+
+
+                                <a
+                                    class="text-link"
+                                    href="{{ url_for('event_detail', event_id=event['id']) }}"
+                                >
+                                    Open →
+                                </a>
+
+                            </div>
+
+                        </div>
+
                     </article>
+
                 {% endfor %}
+
             </div>
+
+
         {% else %}
-            <div class="empty-state small">
-                <p>You have not RSVP'd to an event yet.</p>
+
+            <div class="dashboard-empty-card">
+
+                <div class="empty-icon">
+                    ✓
+                </div>
+
+                <h3>
+                    No RSVPs yet
+                </h3>
+
+                <p>
+                    Explore upcoming events and reserve
+                    your spot.
+                </p>
+
+                <a
+                    class="button secondary"
+                    href="{{ url_for('home') }}"
+                >
+                    Explore events
+                </a>
+
             </div>
+
         {% endif %}
+
     </div>
+
+
+    <!-- =====================================================
+         SAVED EVENTS
+         ===================================================== -->
 
     <div class="dashboard-block">
+
         <div class="section-header">
+
             <div>
                 <h2>Saved events</h2>
-                <p>Events you bookmarked for later.</p>
+
+                <p>
+                    Events you bookmarked for later.
+                </p>
             </div>
+
         </div>
 
+
         {% if favorite_events %}
-            <div class="event-grid compact">
+
+            <div class="upgraded-event-grid">
+
                 {% for event in favorite_events %}
-                    <article class="event-card">
-                        <span class="badge">{{ event["category"] }}</span>
-                        <h3>{{ event["title"] }}</h3>
-                        <p>{{ event["event_date"] }} · {{ event["location"] }}</p>
-                        <a class="text-link" href="{{ url_for('event_detail', event_id=event['id']) }}">View event →</a>
+
+                    <article class="event-card-upgraded">
+
+                        <div class="event-cover">
+
+                            {% if event["image_url"] %}
+
+                                <img
+                                    src="{{ event['image_url'] }}"
+                                    alt="{{ event['title'] }}"
+                                >
+
+                            {% else %}
+
+                                <div class="event-cover-placeholder">
+
+                                    <div class="placeholder-mark">
+                                        EP
+                                    </div>
+
+                                </div>
+
+                            {% endif %}
+
+
+                            <div class="event-cover-overlay">
+
+                                <span class="category-chip">
+                                    {{ event["category"] }}
+                                </span>
+
+                                {% if event["status"] == "cancelled" %}
+
+                                    <span class="event-state event-state-cancelled">
+                                        Cancelled
+                                    </span>
+
+                                {% endif %}
+
+                            </div>
+
+                        </div>
+
+
+                        <div class="event-card-body">
+
+                            <h3>
+                                {{ event["title"] }}
+                            </h3>
+
+                            <p class="event-time-label">
+                                {{ event["event_date"] }}
+                                at
+                                {{ event["event_time"] }}
+                            </p>
+
+                            <p class="event-location">
+                                {{ event["location"] }}
+                            </p>
+
+
+                            <div class="card-footer">
+
+                                <span class="muted">
+                                    Saved event
+                                </span>
+
+                                <a
+                                    class="text-link"
+                                    href="{{ url_for('event_detail', event_id=event['id']) }}"
+                                >
+                                    View →
+                                </a>
+
+                            </div>
+
+                        </div>
+
                     </article>
+
                 {% endfor %}
+
             </div>
+
+
         {% else %}
-            <div class="empty-state small">
-                <p>No saved events yet.</p>
+
+            <div class="dashboard-empty-card">
+
+                <div class="empty-icon">
+                    ★
+                </div>
+
+                <h3>
+                    Nothing saved yet
+                </h3>
+
+                <p>
+                    Save interesting events so you can
+                    quickly find them later.
+                </p>
+
+                <a
+                    class="button secondary"
+                    href="{{ url_for('home') }}"
+                >
+                    Browse events
+                </a>
+
             </div>
+
         {% endif %}
+
     </div>
+
 </section>
+
 {% endblock %}

@@ -83,6 +83,31 @@
                     value="{{ event['max_guests'] if event else 30 }}"
                 >
 
+                <label>Cover image URL</label>
+                <input
+                    type="url"
+                    name="image_url"
+                    value="{{ event['image_url'] if event and event['image_url'] else '' }}"
+                    placeholder="https://images.unsplash.com/..."
+                >
+                <small class="field-help">
+                    Optional. Add a public image URL for the event cover.
+                </small>
+
+                {% if event %}
+                    <label>Event status</label>
+                    <select name="status">
+                        <option value="upcoming"
+                            {% if event['status'] == 'upcoming' %}selected{% endif %}>
+                            Active / Upcoming
+                        </option>
+                        <option value="cancelled"
+                            {% if event['status'] == 'cancelled' %}selected{% endif %}>
+                            Cancelled
+                        </option>
+                    </select>
+                {% endif %}
+
                 <label>Description</label>
                 <textarea
                     name="description"
