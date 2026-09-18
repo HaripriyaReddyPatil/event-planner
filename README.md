@@ -1,10 +1,61 @@
 # Event Planner
 
-Event Planner is a full-stack Flask web application for discovering, creating, managing, and attending events.
+A full-stack event management platform built with Flask that allows users to discover events, manage RSVPs, join automatic waitlists, save events, and track attendance, while giving organizers tools for analytics, check-ins, attendee exports, and event management.
 
-The application supports both attendees and organizers, including RSVP management, automatic waitlists, attendance tracking, analytics, event saving, CSV exports, calendar downloads, automated testing, and continuous integration.
+[![Tests](https://github.com/HaripriyaReddyPatil/event-planner/actions/workflows/tests.yml/badge.svg)](https://github.com/HaripriyaReddyPatil/event-planner/actions/workflows/tests.yml)
 
-I built this project to strengthen my full-stack development skills while focusing on application architecture, database design, user workflows, testing, and deployment.
+## Live Demo
+
+**[View Event Planner Live](https://event-planner-cpoq.onrender.com)**
+
+> The application is hosted on Render, so the first load may take a few seconds if the service has been inactive.
+
+---
+
+## Highlights
+
+- Full user authentication and session management
+- Event creation, editing, duplication, cancellation, and deletion
+- Search, filtering, and event discovery
+- RSVP and capacity management
+- Automatic waitlist promotion
+- Saved events and personal dashboard
+- Organizer analytics and attendance tracking
+- Attendee check-in management
+- CSV attendee export
+- `.ics` calendar downloads
+- Modular Flask architecture
+- Automated Pytest test suite
+- GitHub Actions continuous integration
+
+---
+
+## Tech Stack
+
+**Backend:** Python, Flask, SQLite, Werkzeug  
+**Frontend:** HTML5, CSS3, Jinja2  
+**Testing:** Pytest, Flask Test Client  
+**DevOps:** Git, GitHub Actions, Gunicorn, Render
+
+---
+
+## Screenshots
+
+### Explore Events
+
+![Explore Events](explore-events.png)
+
+### Organizer Dashboard
+
+![Organizer Dashboard](organizer-dashboard.png)
+
+### Attendee RSVP Experience
+
+![Attendee RSVP](attendee-rsvp.png)
+
+### Event Analytics
+
+![Event Analytics](event-analytics.png)
 
 ---
 
@@ -50,26 +101,6 @@ I built this project to strengthen my full-stack development skills while focusi
 - Check attendees in and out
 - Export attendee information as CSV
 - View attendee names, emails, RSVP status, and check-in status
-
----
-
-## Screenshots
-
-### Explore Events
-
-![Explore Events](explore-events.png)
-
-### Organizer Dashboard
-
-![Organizer Dashboard](organizer-dashboard.png)
-
-### Attendee RSVP Experience
-
-![Attendee RSVP](attendee-rsvp.png)
-
-### Event Analytics
-
-![Event Analytics](event-analytics.png)
 
 ---
 
@@ -132,37 +163,6 @@ Attendees can see events they joined and whether their RSVP status is:
 ### Saved Events
 
 Users can bookmark events and access them later from the dashboard.
-
----
-
-## Tech Stack
-
-### Backend
-
-- Python
-- Flask
-- SQLite
-- Werkzeug
-
-### Frontend
-
-- HTML5
-- CSS3
-- Jinja2
-
-### Testing
-
-- Pytest
-- Flask test client
-- Temporary SQLite test databases
-
-### DevOps
-
-- Git
-- GitHub
-- GitHub Actions
-- Gunicorn
-- Render
 
 ---
 
@@ -528,6 +528,8 @@ This project gave me practical experience with:
 
 ## Repository
 
-GitHub:
-
+**GitHub:**  
 https://github.com/HaripriyaReddyPatil/event-planner
+
+**Live Demo:**  
+https://event-planner-cpoq.onrender.com
